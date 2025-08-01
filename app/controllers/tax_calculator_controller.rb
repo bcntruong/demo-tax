@@ -31,12 +31,10 @@ class TaxCalculatorController < ApplicationController
       # Sử dụng flash để lưu dữ liệu cho request tiếp theo
       flash[:tax_result] = @tax_result
       flash[:tax_details] = @tax_details
-      flash[:tax_inputs] = {
-        income: @income,
-        dependents: @dependents,
-        other_deductions: @other_deductions,
-        insurance: @insurance
-      }
+      flash[:income] = @income
+      flash[:dependents] = @dependents
+      flash[:other_deductions] = @other_deductions
+      flash[:insurance] = @insurance
       
       # Đảm bảo flash được lưu trước khi chuyển hướng
       redirect_to root_path(show_tax_result: true)
