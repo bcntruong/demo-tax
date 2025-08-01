@@ -7,6 +7,8 @@ gem "propshaft"
 # Sprockets integration for Rails
 gem "sprockets-rails"
 # Ứng dụng này không sử dụng cơ sở dữ liệu
+# TailwindCSS for Rails
+gem "tailwindcss-rails"
 # gem 'sqlite3'
 # gem "mysql2"
 
