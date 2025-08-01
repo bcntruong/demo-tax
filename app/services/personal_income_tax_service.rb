@@ -50,6 +50,13 @@ class PersonalIncomeTaxService
   
   private
   
+  # Phương thức định dạng số với dấu phân cách hàng nghìn
+  # @param number [Integer] Số cần định dạng
+  # @return [String] Chuỗi số đã được định dạng
+  def format_number(number)
+    number.to_s.gsub(/\B(?=(\d{3})+(?!\d))/, '.')
+  end
+  
   # Tính tổng các khoản giảm trừ
   # @return [Float] Tổng các khoản giảm trừ
   def calculate_total_deductions
@@ -90,8 +97,17 @@ class PersonalIncomeTaxService
       bracket_tax = bracket_income * bracket[:rate]
       
       if bracket_income > 0
+        prev_limit_formatted = format_number(previous_limit.to_i)
+        
+        if bracket[:limit] == Float::INFINITY
+          income_range = "Trên #{prev_limit_formatted}"
+        else
+          limit_formatted = format_number(bracket[:limit].to_i)
+          income_range = "#{prev_limit_formatted} - #{limit_formatted}"
+        end
+        
         tax_breakdown << {
-          income_range: "#{previous_limit.to_i.to_s(:delimited)} - #{bracket[:limit] == Float::INFINITY ? 'trở lên' : bracket[:limit].to_i.to_s(:delimited)}",
+          income_range: income_range,
           rate: (bracket[:rate] * 100).to_i,
           taxable_amount: bracket_income,
           tax: bracket_tax

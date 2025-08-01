@@ -119,14 +119,13 @@
             </form>
             
             <% if params[:show_tax_result] && flash[:tax_result].present? && flash[:tax_details].present? %>
+              <!-- Phần debug đã được xóa -->
               <!-- Hiển thị kết quả tính thuế -->
               <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                 <h3 class="text-lg font-semibold text-green-800 mb-3">Kết quả tính thuế</h3>
                 
-                <!-- Thông tin đầu vào -->
                 <% if flash[:income].present? %>
                 <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
-                  <h4 class="font-medium text-gray-700 mb-2">Thông tin đầu vào</h4>
                   <table class="w-full text-sm">
                     <tr class="border-b border-gray-100">
                       <td class="py-2 text-gray-600 font-medium">Tổng thu nhập/tháng:</td>
@@ -155,24 +154,24 @@
                   <div class="space-y-1 text-sm">
                     <div class="flex justify-between">
                       <span class="text-gray-500">Giảm trừ cá nhân:</span>
-                      <span><%= number_to_currency(flash[:tax_details][:deductions][:personal], unit: '₫', precision: 0, delimiter: '.') %></span>
+                      <span><%= flash[:tax_details][:deductions][:personal].present? ? number_with_delimiter(flash[:tax_details][:deductions][:personal].to_i, delimiter: '.') : 0 %> &#8363;</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-500">Giảm trừ người phụ thuộc:</span>
-                      <span><%= number_to_currency(flash[:tax_details][:deductions][:dependent], unit: '₫', precision: 0, delimiter: '.') %></span>
+                      <span><%= flash[:tax_details][:deductions][:dependent].present? ? number_with_delimiter(flash[:tax_details][:deductions][:dependent].to_i, delimiter: '.') : 0 %> &#8363;</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-500">Khoản giảm trừ khác:</span>
-                      <span><%= number_to_currency(flash[:tax_details][:deductions][:other], unit: '₫', precision: 0, delimiter: '.') %></span>
+                      <span><%= flash[:tax_details][:deductions][:other].present? ? number_with_delimiter(flash[:tax_details][:deductions][:other].to_i, delimiter: '.') : 0 %> &#8363;</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-500">Bảo hiểm bắt buộc:</span>
-                      <span><%= number_to_currency(flash[:tax_details][:deductions][:insurance], unit: '₫', precision: 0, delimiter: '.') %></span>
+                      <span><%= flash[:tax_details][:deductions][:insurance].present? ? number_with_delimiter(flash[:tax_details][:deductions][:insurance].to_i, delimiter: '.') : 0 %> &#8363;</span>
                     </div>
                     <div class="border-t border-gray-200 pt-1 mt-1">
                       <div class="flex justify-between font-medium">
                         <span>Tổng các khoản giảm trừ:</span>
-                        <span><%= number_to_currency(flash[:tax_details][:deductions][:total], unit: '₫', precision: 0, delimiter: '.') %></span>
+                        <span><%= flash[:tax_details][:deductions][:total].present? ? number_with_delimiter(flash[:tax_details][:deductions][:total].to_i, delimiter: '.') : 0 %> &#8363;</span>
                       </div>
                     </div>
                   </div>
@@ -180,38 +179,56 @@
                 <% end %>
                 
                 <!-- Chi tiết tính thuế -->
-                <% if flash[:tax_details] && flash[:tax_details][:calculation].present? %>
+                <% if flash[:tax_details] && flash[:tax_details][:calculation].present? && flash[:tax_details][:calculation][:taxable_income].present? %>
                 <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
                   <h4 class="font-medium text-gray-700 mb-2">Chi tiết tính thuế</h4>
                   <div class="text-sm">
                     <table class="w-full mb-3">
                       <tr class="border-b border-gray-100">
+                        <td class="py-2 text-gray-600 font-medium">Tổng thu nhập:</td>
+                        <td class="py-2 text-right font-semibold text-gray-800"><%= flash[:tax_details][:calculation][:income].present? ? number_with_delimiter(flash[:tax_details][:calculation][:income].to_i, delimiter: '.') : 0 %> &#8363;</td>
+                      </tr>
+                      <tr class="border-b border-gray-100">
                         <td class="py-2 text-gray-600 font-medium">Thu nhập tính thuế:</td>
-                        <td class="py-2 text-right font-semibold text-gray-800"><%= number_with_delimiter(flash[:tax_details][:calculation][:taxable_income].to_i, delimiter: '.') %> &#8363;</td>
+                        <td class="py-2 text-right font-semibold text-gray-800"><%= flash[:tax_details][:calculation][:taxable_income].present? ? number_with_delimiter(flash[:tax_details][:calculation][:taxable_income].to_i, delimiter: '.') : 0 %> &#8363;</td>
                       </tr>
                     </table>
                     
+                    <!-- Bảng chi tiết tính thuế -->
+                    <div class="mt-4 mb-2">
+                      <h5 class="font-medium text-gray-700 mb-2">Bảng tính thuế theo từng bậc thuế</h5>
+                      <p class="text-xs text-gray-500">Chi tiết cách tính thuế lũy tiến từng phần theo quy định hiện hành</p>
+                    </div>
+                    
                     <% if flash[:tax_details][:calculation][:tax_breakdown].present? && flash[:tax_details][:calculation][:tax_breakdown].any? %>
-                      <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead>
-                          <tr>
-                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bậc thuế</th>
-                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thu nhập</th>
-                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thuế suất</th>
-                            <th class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thuế phải nộp</th>
-                          </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                          <% flash[:tax_details][:calculation][:tax_breakdown].each do |bracket| %>
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm border border-gray-200 rounded-lg overflow-hidden">
+                          <thead class="bg-blue-50">
                             <tr>
-                              <td class="px-2 py-2 whitespace-nowrap"><%= bracket[:income_range] %></td>
-                              <td class="px-2 py-2 whitespace-nowrap"><%= number_with_delimiter(bracket[:taxable_amount].to_i, delimiter: '.') %> &#8363;</td>
-                              <td class="px-2 py-2 whitespace-nowrap"><%= bracket[:rate] %>%</td>
-                              <td class="px-2 py-2 text-right whitespace-nowrap"><%= number_with_delimiter(bracket[:tax].to_i, delimiter: '.') %> &#8363;</td>
+                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Bậc thuế</th>
+                              <th class="px-3 py-2 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Thu nhập tính thuế</th>
+                              <th class="px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Thuế suất</th>
+                              <th class="px-3 py-2 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Thuế phải nộp</th>
                             </tr>
-                          <% end %>
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody class="bg-white divide-y divide-gray-200">
+                            <% flash[:tax_details][:calculation][:tax_breakdown].each_with_index do |bracket, index| %>
+                              <tr class="hover:bg-gray-50">
+                                <td class="px-3 py-2.5 whitespace-nowrap font-medium text-gray-700"><%= bracket[:income_range] %></td>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-right text-gray-700"><%= number_with_delimiter(bracket[:taxable_amount].to_i, delimiter: '.') %> &#8363;</td>
+                                <td class="px-3 py-2.5 whitespace-nowrap text-center font-medium <%= bracket[:rate].to_i > 20 ? 'text-red-600' : 'text-blue-600' %>"><%= bracket[:rate] %>%</td>
+                                <td class="px-3 py-2.5 text-right whitespace-nowrap font-medium text-gray-800"><%= number_with_delimiter(bracket[:tax].to_i, delimiter: '.') %> &#8363;</td>
+                              </tr>
+                            <% end %>
+                          </tbody>
+                          <tfoot class="bg-blue-50">
+                            <tr>
+                              <td colspan="3" class="px-3 py-2.5 text-right font-medium text-gray-700">Tổng thuế phải nộp:</td>
+                              <td class="px-3 py-2.5 text-right font-bold text-blue-700"><%= flash[:tax_result].present? ? number_with_delimiter(flash[:tax_result].to_i, delimiter: '.') : 0 %> &#8363;</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
                     <% end %>
                   </div>
                 </div>
@@ -222,7 +239,7 @@
                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <div class="flex justify-between items-center">
                     <span class="text-blue-800 font-medium text-base">Tổng thuế TNCN phải nộp:</span>
-                    <span class="text-blue-800 text-xl font-bold"><%= number_with_delimiter(flash[:tax_result].to_i, delimiter: '.') %> &#8363;</span>
+                    <span class="text-blue-800 text-xl font-bold"><%= flash[:tax_result].present? ? number_with_delimiter(flash[:tax_result].to_i, delimiter: '.') : 0 %> &#8363;</span>
                   </div>
                 </div>
                 <% end %>
@@ -231,6 +248,41 @@
             
 
           </div>
+
+          <!-- Bảng chi tiết thuế theo từng bậc -->
+          <% if flash[:tax_details].present? && flash[:tax_details]["calculation"].present? && flash[:tax_details]["calculation"]["tax_breakdown"].present? %>
+            <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+              <h4 class="text-gray-700 mb-3 font-bold">Bảng chi tiết thuế theo từng bậc</h4>
+              
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm border border-gray-200 rounded-lg overflow-hidden">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-2 text-left text-xs text-gray-700 uppercase tracking-wider">Phần chịu thuế</th>
+                      <th class="px-4 py-2 text-center text-xs text-gray-700 uppercase tracking-wider">Thuế suất</th>
+                      <th class="px-4 py-2 text-right text-xs text-gray-700 uppercase tracking-wider">Thuế</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <% flash[:tax_details]["calculation"]["tax_breakdown"].each do |bracket| %>
+                      <tr>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-700"><%= number_with_delimiter(bracket["taxable_amount"].to_i, delimiter: '.') %> &#8363;</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-center  <%= bracket["rate"].to_i > 20 ? 'text-red-600' : 'text-blue-600' %>"><%= bracket["rate"] %>%</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap text-gray-800"><%= number_with_delimiter(bracket["tax"].to_i, delimiter: '.') %> &#8363;</td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                  <tfoot class="bg-gray-50">
+                    <tr>
+                      <td colspan="2" class="px-4 py-3 text-right text-gray-700">Tổng thuế phải nộp:</td>
+                      <td class="px-4 py-3 text-right font-bold text-blue-700"><%= flash[:tax_result].present? ? number_with_delimiter(flash[:tax_result].to_i, delimiter: '.') : 0 %> &#8363;</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          <% end %>
+
         </div>
         
         <!-- Thông tin biểu thuế -->
@@ -243,53 +295,35 @@
               <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
-                    <th class="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bậc</th>
-                    <th class="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phần thu nhập tính thuế/tháng (VND)</th>
-                    <th class="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thuế suất</th>
+                    <th class="px-4 py-2 bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">Bậc</th>
+                    <th class="px-4 py-2 bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">Phần thu nhập tính thuế/tháng (VND)</th>
+                    <th class="px-4 py-2 bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">Thuế suất</th>
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap">1</td>
-                    <td class="px-4 py-2 whitespace-nowrap">Đến 5 triệu</td>
-                    <td class="px-4 py-2 whitespace-nowrap">5%</td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap">2</td>
-                    <td class="px-4 py-2 whitespace-nowrap">Trên 5 triệu đến 10 triệu</td>
-                    <td class="px-4 py-2 whitespace-nowrap">10%</td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap">3</td>
-                    <td class="px-4 py-2 whitespace-nowrap">Trên 10 triệu đến 18 triệu</td>
-                    <td class="px-4 py-2 whitespace-nowrap">15%</td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap">4</td>
-                    <td class="px-4 py-2 whitespace-nowrap">Trên 18 triệu đến 32 triệu</td>
-                    <td class="px-4 py-2 whitespace-nowrap">20%</td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap">5</td>
-                    <td class="px-4 py-2 whitespace-nowrap">Trên 32 triệu đến 52 triệu</td>
-                    <td class="px-4 py-2 whitespace-nowrap">25%</td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap">6</td>
-                    <td class="px-4 py-2 whitespace-nowrap">Trên 52 triệu đến 80 triệu</td>
-                    <td class="px-4 py-2 whitespace-nowrap">30%</td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 whitespace-nowrap">7</td>
-                    <td class="px-4 py-2 whitespace-nowrap">Trên 80 triệu</td>
-                    <td class="px-4 py-2 whitespace-nowrap">35%</td>
-                  </tr>
+                  <% previous_limit = 0 %>
+                  <% PersonalIncomeTaxService::TAX_BRACKETS.each_with_index do |bracket, index| %>
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap"><%= index + 1 %></td>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        <% if previous_limit == 0 %>
+                          Đến <%= number_with_delimiter(bracket[:limit], delimiter: '.') %>
+                        <% elsif bracket[:limit] == Float::INFINITY %>
+                          Trên <%= number_with_delimiter(previous_limit, delimiter: '.') %>
+                        <% else %>
+                          Trên <%= number_with_delimiter(previous_limit, delimiter: '.') %> đến <%= number_with_delimiter(bracket[:limit], delimiter: '.') %>
+                        <% end %>
+                      </td>
+                      <td class="px-4 py-2 whitespace-nowrap"><%= (bracket[:rate] * 100).to_i %>%</td>
+                    </tr>
+                    <% previous_limit = bracket[:limit] %>
+                  <% end %>
                 </tbody>
               </table>
             </div>
             <div class="mt-4 text-sm text-gray-600">
-              <p>Giảm trừ gia cảnh: 11.000.000 VND/tháng</p>
-              <p>Giảm trừ người phụ thuộc: 4.400.000 VND/người/tháng</p>
+              <p>Giảm trừ gia cảnh: <%= number_with_delimiter(PersonalIncomeTaxService::PERSONAL_DEDUCTION, delimiter: '.') %> &#8363;/tháng</p>
+              <p>Giảm trừ người phụ thuộc: <%= number_with_delimiter(PersonalIncomeTaxService::DEPENDENT_DEDUCTION, delimiter: '.') %> &#8363;/người/tháng</p>
             </div>
           </div>
         </div>
